@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Materialausgabe</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <header>
+    <h1>SCHOOLBOX</h1>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="shop.html">Material</a>
+      <a href="about.html">Über uns</a>
+      <a href="contact.html">Kontakt</a>
+      <a href="login.html">Anmelden</a>
+    </nav>
+  </header>
+
+  <section>
+    <h2>Schulmaterial – Ausleihen oder Kaufen</h2>
+    <p style="text-align:center;">Hier kannst du Lernmaterialien für deine Schulzeit kaufen oder leihen.</p>
+    <div class="grid" id="product-grid">
+      <p>Lade Artikel...</p>
+    </div>
+  </section>
+
+  <!-- 🛒 Warenkorb-Button -->
+  <button class="cart-button" onclick="toggleCart()">🛒</button>
+
+  <!-- 🧾 Warenkorb-Fenster -->
+  <div id="cart-window">
+    <button id="close-cart" onclick="toggleCart()">Schließen</button>
+    <h3>Dein Warenkorb</h3>
+    <div id="cart-items">
+      <p>Keine Artikel im Warenkorb.</p>
+    </div>
+    <hr>
+    <p id="cart-total"><strong>Gesamt:</strong> €0.00</p>
+    <input type="text" id="coupon" placeholder="Gutscheincode">
+    <button onclick="applyCoupon()">Gutschein einlösen</button>
+    <button onclick="checkout()">Jetzt kaufen</button>
+  </div>
+
+  <footer>&copy; 2025 SCHOOLBOX</footer>
+
+  <script>
+    let cart = [];
+    let discount = 0;
+
+    function toggleCart() {
+      const cartWindow = document.getElementById("cart-window");
+      cartWindow.style.display = cartWindow.style.display === "none" ? "flex" : "none";
+    }
+
+    function updateCart() {
+      const cartItems = document.getElementById("cart-items");
+      if (cart.length === 0) {
+        cartItems.innerHTML = "<p>Keine Artikel im Warenkorb.</p>";
+      } else {
+        cartItems.innerHTML = "";
+        cart.forEach((item, index) => {
+          const p = document.createElement("p");
+          p.innerHTML = `${item.title} – €${item.price.toFixed(2)} 
+            <button onclick="removeItem(${index})">Löschen</button>`;
+          cartItems.appendChild(p);
+        });
+      }
+      updateTotal();
+    }
+
+    function removeItem(index) {
+      cart.splice(index, 1);
+      updateCart();
+    }
+
+    function updateTotal() {
+      let total = cart.reduce((sum, item) => sum + item.price, 0);
+      if (discount > 0) {
+        total = total - (total * discount);
+      }
+      document.getElementById("cart-total").textContent = `Gesamt: €${total.toFixed(2)}`;
+    }
+
+    function applyCoupon() {
+      const code = document.getElementById("coupon").value.trim();
+      if (code === "SCHULE10") {
+        discount = 0.1;
+        updateTotal();
+      } else {
+        discount = 0;
+        updateTotal();
+      }
+    }
+
+    function checkout() {
+      if (cart.length === 0) return;
+      cart = [];
+      discount = 0;
+      updateCart();
+      document.getElementById("coupon").value = "";
+    }
+
+    document.getElementById("cart-window").style.display = "none";
+
+    // 🔄 Artikel aus der Datenbank über getArtikel.php laden
+    fetch("getArtikel.php")
+      .then(res => res.json())
+      .then(data => {
+        const grid = document.getElementById("product-grid");
+        grid.innerHTML = "";
+
+        if (data.length === 0) {
+          grid.innerHTML = "<p>Zurzeit sind keine Artikel verfügbar.</p>";
+          return;
+        }
+
+        data.forEach(item => {
+          const card = document.createElement("div");
+          card.classList.add("card");
+          card.innerHTML = `
+            <img src="${item.bild_url}" alt="${item.titel}" />
+            <h3>${item.titel}</h3>
+            <p>${item.beschreibung || "Keine Beschreibung vorhanden"}</p>
+            <p><strong>${item.typ === "leihen" ? "Ausleihen" : "Kaufen"}</strong> – ${item.typ === "leihen" ? "Kostenlos" : "€" + parseFloat(item.preis).toFixed(2)}</p>
+            <button data-type="${item.typ}">${item.typ === "leihen" ? "Jetzt ausleihen" : "In den Warenkorb"}</button>
+          `;
+
+          const button = card.querySelector("button");
+          button.addEventListener("click", () => {
+            if (item.typ === "kaufen") {
+              cart.push({ title: item.titel, price: parseFloat(item.preis) });
+              updateCart();
+            }
+          });
+
+          grid.appendChild(card);
+        });
+      })
+      .catch(err => {
+        document.getElementById("product-grid").innerHTML = "<p>Fehler beim Laden der Artikel.</p>";
+        console.error("Fehler:", err);
+      });
+  </script>
+</body>
+</html>

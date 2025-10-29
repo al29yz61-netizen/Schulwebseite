@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Artikel hinzufügen – SCHOOLBOX</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <header>
+    <h1>Artikelverwaltung</h1>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="shop.html">Shop</a>
+      <a href="artikel_add.html">Artikel hinzufügen</a>
+    </nav>
+  </header>
+
+  <section>
+    <h2>Neuen Artikel hinzufügen</h2>
+    <form action="addArtikel.php" method="POST" class="form-box">
+      <input type="text" name="titel" placeholder="Titel des Artikels" required />
+      
+      <textarea name="beschreibung" placeholder="Beschreibung des Artikels" rows="4" required></textarea>
+      
+      <input type="number" step="0.01" name="preis" placeholder="Preis (z. B. 14.99)" required />
+      
+      <input type="url" name="bild_url" placeholder="Bild-URL (z. B. https://...)" required />
+      
+      <select name="typ" required>
+        <option value="">Auswahl: Kaufen oder Leihen</option>
+        <option value="kaufen">Kaufen</option>
+        <option value="leihen">Leihen</option>
+      </select>
+      
+      <button type="submit">Artikel hinzufügen</button>
+    </form>
+  </section>
+
+  <footer>&copy; 2025 SCHOOLBOX Admin</footer>
+
+</body>
+</html>
