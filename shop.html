@@ -47,111 +47,122 @@
 
   <footer>&copy; 2025 SCHOOLBOX – Deine Schulmaterial-Plattform</footer>
 
-  <script>
-    let cart = [];
-    let discount = 0;
+<script>
+  const SUPABASE_URL = 'https://DEIN-PROJEKT.supabase.co'; // 🔁 DEIN LINK
+  const SUPABASE_KEY = 'DEIN-ANON-KEY'; // 🔁 DEIN PUBLIC API KEY
 
-    function toggleCart() {
-      const cartWindow = document.getElementById("cart-window");
-      cartWindow.style.display = cartWindow.style.display === "none" ? "flex" : "none";
+  let cart = [];
+  let discount = 0;
+
+  function toggleCart() {
+    const cartWindow = document.getElementById("cart-window");
+    cartWindow.style.display = cartWindow.style.display === "none" ? "flex" : "none";
+  }
+
+  function updateCart() {
+    const cartItems = document.getElementById("cart-items");
+    if (cart.length === 0) {
+      cartItems.innerHTML = "<p>Keine Artikel im Warenkorb.</p>";
+    } else {
+      cartItems.innerHTML = "";
+      cart.forEach((item, index) => {
+        const p = document.createElement("p");
+        p.innerHTML = `${item.title} – €${item.price.toFixed(2)} 
+          <button onclick="removeItem(${index})">🗑️</button>`;
+        cartItems.appendChild(p);
+      });
     }
+    updateTotal();
+  }
 
-    function updateCart() {
-      const cartItems = document.getElementById("cart-items");
-      if (cart.length === 0) {
-        cartItems.innerHTML = "<p>Keine Artikel im Warenkorb.</p>";
-      } else {
-        cartItems.innerHTML = "";
-        cart.forEach((item, index) => {
-          const p = document.createElement("p");
-          p.innerHTML = `${item.title} – €${item.price.toFixed(2)} 
-            <button onclick="removeItem(${index})">🗑️</button>`;
-          cartItems.appendChild(p);
-        });
-      }
-      updateTotal();
+  function removeItem(index) {
+    cart.splice(index, 1);
+    updateCart();
+  }
+
+  function updateTotal() {
+    let total = cart.reduce((sum, item) => sum + item.price, 0);
+    if (discount > 0) {
+      total -= total * discount;
     }
+    document.getElementById("cart-total").textContent = `Gesamt: €${total.toFixed(2)}`;
+  }
 
-    function removeItem(index) {
-      cart.splice(index, 1);
-      updateCart();
+  function applyCoupon() {
+    const code = document.getElementById("coupon").value.trim();
+    if (code === "SCHULE10") {
+      discount = 0.1;
+      alert("Gutschein angewendet! 10% Rabatt.");
+    } else {
+      discount = 0;
+      alert("Ungültiger Gutscheincode.");
     }
+    updateTotal();
+  }
 
-    function updateTotal() {
-      let total = cart.reduce((sum, item) => sum + item.price, 0);
-      if (discount > 0) {
-        total -= total * discount;
-      }
-      document.getElementById("cart-total").textContent = `Gesamt: €${total.toFixed(2)}`;
+  function checkout() {
+    if (cart.length === 0) {
+      alert("Warenkorb ist leer.");
+      return;
     }
+    alert("Vielen Dank für deine Bestellung!");
+    cart = [];
+    discount = 0;
+    updateCart();
+    document.getElementById("coupon").value = "";
+  }
 
-    function applyCoupon() {
-      const code = document.getElementById("coupon").value.trim();
-      if (code === "SCHULE10") {
-        discount = 0.1;
-        alert("Gutschein angewendet! 10% Rabatt.");
-      } else {
-        discount = 0;
-        alert("Ungültiger Gutscheincode.");
-      }
-      updateTotal();
+  document.getElementById("cart-window").style.display = "none";
+
+  // 🔄 Artikel direkt aus Supabase laden
+  fetch(`${SUPABASE_URL}/rest/v1/artikel`, {
+    method: "GET",
+    headers: {
+      apikey: SUPABASE_KEY,
+      Authorization: `Bearer ${SUPABASE_KEY}`
     }
+  })
+    .then(res => res.json())
+    .then(data => {
+      const grid = document.getElementById("product-grid");
+      grid.innerHTML = "";
 
-    function checkout() {
-      if (cart.length === 0) {
-        alert("Warenkorb ist leer.");
+      if (!data || data.length === 0) {
+        grid.innerHTML = "<p>Zurzeit sind keine Artikel verfügbar.</p>";
         return;
       }
-      alert("Vielen Dank für deine Bestellung!");
-      cart = [];
-      discount = 0;
-      updateCart();
-      document.getElementById("coupon").value = "";
-    }
 
-    document.getElementById("cart-window").style.display = "none";
+      data.forEach(item => {
+        const card = document.createElement("div");
+        card.classList.add("card");
+        card.innerHTML = `
+          <img src="${item.bild_url}" alt="${item.titel}" />
+          <h3>${item.titel}</h3>
+          <p>${item.beschreibung || "Keine Beschreibung vorhanden"}</p>
+          <p><strong>${item.typ === "leihen" ? "Ausleihen" : "Kaufen"}</strong> – ${item.typ === "leihen" ? "Kostenlos" : "€" + parseFloat(item.preis).toFixed(2)}</p>
+          <button data-type="${item.typ}">${item.typ === "leihen" ? "Jetzt ausleihen" : "In den Warenkorb"}</button>
+        `;
 
-    // 🔄 Artikel laden via getArtikel.php
-    fetch("getArtikel.php")
-      .then(res => res.json())
-      .then(data => {
-        const grid = document.getElementById("product-grid");
-        grid.innerHTML = "";
-
-        if (!data || data.length === 0) {
-          grid.innerHTML = "<p>Zurzeit sind keine Artikel verfügbar.</p>";
-          return;
-        }
-
-        data.forEach(item => {
-          const card = document.createElement("div");
-          card.classList.add("card");
-          card.innerHTML = `
-            <img src="${item.bild_url}" alt="${item.titel}" />
-            <h3>${item.titel}</h3>
-            <p>${item.beschreibung || "Keine Beschreibung vorhanden"}</p>
-            <p><strong>${item.typ === "leihen" ? "Ausleihen" : "Kaufen"}</strong> – ${item.typ === "leihen" ? "Kostenlos" : "€" + parseFloat(item.preis).toFixed(2)}</p>
-            <button data-type="${item.typ}">${item.typ === "leihen" ? "Jetzt ausleihen" : "In den Warenkorb"}</button>
-          `;
-
-          const button = card.querySelector("button");
-          button.addEventListener("click", () => {
-            if (item.typ === "kaufen") {
-              cart.push({ title: item.titel, price: parseFloat(item.preis) });
-              updateCart();
-            } else {
-              alert(`${item.titel} wird zur Ausleihe bereitgestellt.`);
-            }
-          });
-
-          grid.appendChild(card);
+        const button = card.querySelector("button");
+        button.addEventListener("click", () => {
+          if (item.typ === "kaufen") {
+            cart.push({ title: item.titel, price: parseFloat(item.preis) });
+            updateCart();
+          } else {
+            alert(`${item.titel} wird zur Ausleihe bereitgestellt.`);
+          }
         });
-      })
-      .catch(err => {
-        document.getElementById("product-grid").innerHTML = "<p>Fehler beim Laden der Artikel.</p>";
-        console.error("Fehler:", err);
+
+        grid.appendChild(card);
       });
-  </script>
+    })
+    .catch(err => {
+      document.getElementById("product-grid").innerHTML = "<p>Fehler beim Laden der Artikel.</p>";
+      console.error("Fehler:", err);
+    });
+</script>
+
 
 </body>
 </html>
+
