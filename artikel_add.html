@@ -13,22 +13,22 @@
     <nav>
       <a href="index.html">Home</a>
       <a href="shop.html">Shop</a>
-      <a href="artikel_add.html">Artikel hinzufügen</a>
+      <a href="artikel_add.html" class="active">Artikel hinzufügen</a>
     </nav>
   </header>
 
   <section>
     <h2>Neuen Artikel hinzufügen</h2>
-    <form action="addArtikel.php" method="POST" class="form-box">
-      <input type="text" name="titel" placeholder="Titel des Artikels" required />
+    <form id="artikelForm" class="form-box">
+      <input type="text" id="titel" placeholder="Titel des Artikels" required />
       
-      <textarea name="beschreibung" placeholder="Beschreibung des Artikels" rows="4" required></textarea>
+      <textarea id="beschreibung" placeholder="Beschreibung des Artikels" rows="4" required></textarea>
       
-      <input type="number" step="0.01" name="preis" placeholder="Preis (z. B. 14.99)" required />
+      <input type="number" step="0.01" id="preis" placeholder="Preis (z. B. 14.99)" required />
       
-      <input type="url" name="bild_url" placeholder="Bild-URL (z. B. https://...)" required />
+      <input type="url" id="bild_url" placeholder="Bild-URL (z. B. https://...)" required />
       
-      <select name="typ" required>
+      <select id="typ" required>
         <option value="">Auswahl: Kaufen oder Leihen</option>
         <option value="kaufen">Kaufen</option>
         <option value="leihen">Leihen</option>
@@ -36,9 +36,59 @@
       
       <button type="submit">Artikel hinzufügen</button>
     </form>
+
+    <p id="feedback"></p>
   </section>
 
   <footer>&copy; 2025 SCHOOLBOX Admin</footer>
 
+  <script>
+    // 🔑 Supabase Zugangsdaten (hier einsetzen!)
+    const SUPABASE_URL = "https://DEIN-PROJEKT.supabase.co";  // <- anpassen
+    const SUPABASE_KEY = "DEIN-ANON-KEY";  // <- anpassen
+
+    const form = document.getElementById("artikelForm");
+    const feedback = document.getElementById("feedback");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      // Daten aus Formular lesen
+      const artikel = {
+        titel: document.getElementById("titel").value,
+        beschreibung: document.getElementById("beschreibung").value,
+        preis: parseFloat(document.getElementById("preis").value),
+        bild_url: document.getElementById("bild_url").value,
+        typ: document.getElementById("typ").value
+      };
+
+      // Anfrage an Supabase senden
+      try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/artikel`, {
+          method: "POST",
+          headers: {
+            apikey: SUPABASE_KEY,
+            Authorization: `Bearer ${SUPABASE_KEY}`,
+            "Content-Type": "application/json",
+            Prefer: "return=representation"
+          },
+          body: JSON.stringify(artikel)
+        });
+
+        if (!response.ok) {
+          throw new Error(`Fehler: ${response.status}`);
+        }
+
+        const data = await response.json();
+        feedback.textContent = `✅ Artikel "${data[0].titel}" erfolgreich hinzugefügt!`;
+        feedback.style.color = "green";
+        form.reset();
+      } catch (err) {
+        console.error("Fehler beim Hinzufügen:", err);
+        feedback.textContent = "❌ Fehler beim Speichern des Artikels!";
+        feedback.style.color = "red";
+      }
+    });
+  </script>
 </body>
 </html>
