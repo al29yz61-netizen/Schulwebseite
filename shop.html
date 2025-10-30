@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Materialausgabe</title>
+  <title>Schoolbox Shop</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -12,28 +12,29 @@
     <h1>SCHOOLBOX</h1>
     <nav>
       <a href="index.html">Home</a>
-      <a href="shop.html">Material</a>
+      <a href="shop.html" class="active">Material</a>
       <a href="about.html">Über uns</a>
       <a href="contact.html">Kontakt</a>
       <a href="login.html">Anmelden</a>
     </nav>
   </header>
 
-  <section>
+  <section class="intro">
     <h2>Schulmaterial – Ausleihen oder Kaufen</h2>
-    <p style="text-align:center;">Hier kannst du Lernmaterialien für deine Schulzeit kaufen oder leihen.</p>
+    <p>Finde alles für deinen Schulalltag: Taschenrechner, Ordner, Bücher und mehr.</p>
+  </section>
+
+  <section>
     <div class="grid" id="product-grid">
       <p>Lade Artikel...</p>
     </div>
   </section>
 
-  <!-- 🛒 Warenkorb-Button -->
   <button class="cart-button" onclick="toggleCart()">🛒</button>
 
-  <!-- 🧾 Warenkorb-Fenster -->
   <div id="cart-window">
-    <button id="close-cart" onclick="toggleCart()">Schließen</button>
-    <h3>Dein Warenkorb</h3>
+    <button id="close-cart" onclick="toggleCart()">Schließen ✖</button>
+    <h3>Warenkorb</h3>
     <div id="cart-items">
       <p>Keine Artikel im Warenkorb.</p>
     </div>
@@ -44,7 +45,7 @@
     <button onclick="checkout()">Jetzt kaufen</button>
   </div>
 
-  <footer>&copy; 2025 SCHOOLBOX</footer>
+  <footer>&copy; 2025 SCHOOLBOX – Deine Schulmaterial-Plattform</footer>
 
   <script>
     let cart = [];
@@ -64,7 +65,7 @@
         cart.forEach((item, index) => {
           const p = document.createElement("p");
           p.innerHTML = `${item.title} – €${item.price.toFixed(2)} 
-            <button onclick="removeItem(${index})">Löschen</button>`;
+            <button onclick="removeItem(${index})">🗑️</button>`;
           cartItems.appendChild(p);
         });
       }
@@ -79,7 +80,7 @@
     function updateTotal() {
       let total = cart.reduce((sum, item) => sum + item.price, 0);
       if (discount > 0) {
-        total = total - (total * discount);
+        total -= total * discount;
       }
       document.getElementById("cart-total").textContent = `Gesamt: €${total.toFixed(2)}`;
     }
@@ -88,15 +89,20 @@
       const code = document.getElementById("coupon").value.trim();
       if (code === "SCHULE10") {
         discount = 0.1;
-        updateTotal();
+        alert("Gutschein angewendet! 10% Rabatt.");
       } else {
         discount = 0;
-        updateTotal();
+        alert("Ungültiger Gutscheincode.");
       }
+      updateTotal();
     }
 
     function checkout() {
-      if (cart.length === 0) return;
+      if (cart.length === 0) {
+        alert("Warenkorb ist leer.");
+        return;
+      }
+      alert("Vielen Dank für deine Bestellung!");
       cart = [];
       discount = 0;
       updateCart();
@@ -105,14 +111,14 @@
 
     document.getElementById("cart-window").style.display = "none";
 
-    // 🔄 Artikel aus der Datenbank über getArtikel.php laden
+    // 🔄 Artikel laden via getArtikel.php
     fetch("getArtikel.php")
       .then(res => res.json())
       .then(data => {
         const grid = document.getElementById("product-grid");
         grid.innerHTML = "";
 
-        if (data.length === 0) {
+        if (!data || data.length === 0) {
           grid.innerHTML = "<p>Zurzeit sind keine Artikel verfügbar.</p>";
           return;
         }
@@ -133,6 +139,8 @@
             if (item.typ === "kaufen") {
               cart.push({ title: item.titel, price: parseFloat(item.preis) });
               updateCart();
+            } else {
+              alert(`${item.titel} wird zur Ausleihe bereitgestellt.`);
             }
           });
 
@@ -144,5 +152,6 @@
         console.error("Fehler:", err);
       });
   </script>
+
 </body>
 </html>
